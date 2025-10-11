@@ -1,19 +1,14 @@
 #IMPORT THE DATA AND CLEAN IT FOR ANALYSIS
 library(tidyverse)
 library(dplyr)
+library(readr)
 
 #-------------------------------------------------------------------------------
 #IMPORTING ALL DATA
 
-#import eprime
-posterData <- read_delim(
-  'data/posterData.txt',   # The name of your *.txt file output from Emerge
-  delim = '\t', # These data are tab separated
-) 
-
 #import eprime 09 29 (roughly 100 participants)
 posterData <- read_delim(
-  'data/data_spss.txt',   # The name of your *.txt file output from Emerge
+  'data/raw/data_0929.txt',   # The name of your *.txt file output from Emerge
   delim = '\t', # These data are tab separated
 ) 
 
@@ -49,7 +44,7 @@ posterData_clean <-
   )
 
 #import Qualtrics
-Qualtrics <- read.csv("data/Qualtrics0929.csv")
+Qualtrics <- read.csv("data/raw/Qualtrics0929.csv")
 
 #Clean Qualtrics
 Qualtrics_clean <- 
@@ -63,13 +58,13 @@ Qualtrics_clean <-
   )
 
 #import eprime excel w/ conds
-EprimeFiles <- read.csv("data/EMA1_eprime_files.csv")
+EprimeFiles <- read.csv("data/raw/EMA1_eprime_files_0929.csv")
 
 #Clean EprimeFiles
 EprimeFiles_clean <- 
   EprimeFiles %>%                  
   select(
-    Subject = Subject,
+    Subject = Subject..,
     ControlCond = Control.Condition,
     RewardCond = Reward.Condition,
   )
@@ -99,17 +94,26 @@ joinedData <- posterData_clean %>%
 EMA_factors <- joinedData %>%
   mutate(across(
     .cols = c(A1Block, A2Block, B1Block, B2Block, 
-              NegIacc, NegSacc, NeuIacc, NeuSacc, 
-              PosIacc, PosSacc, Weight1, Weight2, 
+               Weight1, Weight2, 
               Subject, Ethinicity, Gender, ControlCond,
               RewardCond, KResp, NResp),
     .fns = factor
   ))
 
 #number
+#prints out any non-numerical values entered in age on Qualtrics
+EMA_factors %>%
+  +     select(Age, PPIR40, NegIacc, NegSacc) %>%
+  +     filter(!grepl("^[0-9.]+$", Age)) %>%   # shows rows where Age isn't purely numeric
+  +     distinct(Age)
+#remove the strings
+EMA_factors <- EMA_factors %>%
+  mutate(Age = parse_number(Age))
+
 EMA <- EMA_factors %>%
   mutate(across(
-    .cols = c(Age, PPIR40),
+    .cols = c(Age, PPIR40, NegIacc, NegSacc, NeuIacc, NeuSacc, 
+              PosIacc, PosSacc,),
     .fns = as.numeric
   ))
 
@@ -118,7 +122,7 @@ EMA <- EMA_factors %>%
 
 # Create subject demographic data
 subject_data <- EMA %>%
-  select(Subject, Age, Gender, Ethinicity, PPIR40) %>%
+  select(Subject, Age, Gender, Ethinicity, PPIR40, ControlCond, RewardCond) %>%
   distinct(Subject, .keep_all = TRUE)
 
 # Create dataset with only accurate trials
