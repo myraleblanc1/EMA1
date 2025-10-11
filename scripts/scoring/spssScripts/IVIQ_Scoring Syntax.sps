@@ -1,0 +1,6 @@
+﻿* Encoding: UTF-8.
+#IVIQ total
+
+DATASET ACTIVATE DataSet1.
+compute IVIQ_Total = sum(IVIQ_1,IVIQ_2,IVIQ_3,IVIQ_4,IVIQ_5,IVIQ_6,IVIQ_7,IVIQ_8,IVIQ_9,IVIQ_10).
+EXECUTE.

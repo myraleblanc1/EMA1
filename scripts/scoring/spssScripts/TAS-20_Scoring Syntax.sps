@@ -1,0 +1,23 @@
+﻿* Encoding: UTF-8.
+
+*recode reverse scored items (R=recoded variable).
+RECODE TAS04 (1=5) (2=4) (3=3) (4=2) (5=1) INTO TAS04R.
+RECODE TAS05 (1=5) (2=4) (3=3) (4=2) (5=1) INTO TAS05R.
+RECODE TAS10 (1=5) (2=4) (3=3) (4=2) (5=1) INTO TAS10R.
+RECODE TAS18 (1=5) (2=4) (3=3) (4=2) (5=1) INTO TAS18R.
+RECODE TAS19 (1=5) (2=4) (3=3) (4=2) (5=1) INTO TAS19R.
+EXECUTE.
+
+*calculate subscale totals.
+COMPUTE Difficulty_describing = sum(TAS02, TAS04R, TAS11, TAS12, TAS17).
+EXECUTE.
+
+COMPUTE Difficulty_identifying = sum(TAS01, TAS03, TAS06, TAS07, TAS09, TAS13, TAS14).
+EXECUTE.
+
+COMPUTE Attention_external = sum(TAS05R, TAS08, TAS10R, TAS15, TAS16, TAS18R, TAS19R, TAS20).
+EXECUTE.
+
+*calculate total score.
+COMPUTE TAS_Total = sum(TAS01, TAS02, TAS03, TAS04R, TAS05R, TAS06, TAS07, TAS08, TAS09, TAS10R, TAS11, TAS12, TAS13, TAS14, TAS15, TAS16, TAS17, TAS18R, TAS19R, TAS20).
+EXECUTE.

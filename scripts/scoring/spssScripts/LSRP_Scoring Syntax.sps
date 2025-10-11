@@ -1,0 +1,26 @@
+﻿* Encoding: UTF-8.
+*recode reverse scored items (R= recoded variable).
+RECODE LSRP03 (1=4) (2=3) (3=2) (4=1) INTO LSRP03R.
+RECODE LSRP08 (1=4) (2=3) (3=2) (4=1) INTO LSRP08R.
+RECODE LSRP11 (1=4) (2=3) (3=2) (4=1) INTO LSRP11R.
+RECODE LSRP14 (1=4) (2=3) (3=2) (4=1) INTO LSRP14R.
+RECODE LSRP16 (1=4) (2=3) (3=2) (4=1) INTO LSRP16R.
+RECODE LSRP24 (1=4) (2=3) (3=2) (4=1) INTO LSRP24R.
+RECODE LSRP30 (1=4) (2=3) (3=2) (4=1) INTO LSRP30R.
+EXECUTE.
+
+*calculate subscale totals.
+COMPUTE Primary_psychopathy = SUM(LSRP02, LSRP05, LSRP08R, LSRP10, LSRP12, LSRP13, LSRP14R, LSRP16R, LSRP19, LSRP22, LSRP24R, LSRP25, LSRP26, LSRP27, LSRP28, LSRP30R). 
+EXECUTE. 
+
+COMPUTE Secondary_psychopathy = SUM(LSRP01, LSRP03R, LSRP06, LSRP07, LSRP09, LSRP11R, LSRP15, LSRP18, LSRP20, LSRP23). 
+EXECUTE.
+
+*calculate total score.
+COMPUTE LSRP_Total = SUM(Primary_psychopathy, Secondary_psychopathy). 
+EXECUTE.
+
+
+
+
+
