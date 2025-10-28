@@ -3,6 +3,7 @@ library(tidyverse)
 library(tidyr)
 library(stringr)
 library(ggplot2)
+library(readr)
 #---------------------------------------------------------
 #Make the data long for cleaning and break down by valence/image presence
 rt_long <- accEMA %>%
@@ -93,51 +94,144 @@ ggplot(rt_sum, aes(x = img_cat, y = meanRT, fill = RewardCond)) +
     plot.title = element_text(face = "bold", size = 15, hjust = 0.5)
   )
 #---------------------------------------------------------
-ggplot(clean_accEMA_MAD, aes(x = img_cat, y = RT, fill = RewardCond)) +
-  geom_violin(trim = FALSE, alpha = 0.6, position = position_dodge(width = 0.8)) +
-  geom_boxplot(width = 0.1, position = position_dodge(width = 0.8), outlier.shape = NA) +
+#scatterplot
+ggplot(clean_accEMA_MAD, aes(x = ControlCond, y = RT, color = img_cat)) +
+  geom_jitter(width = 0.2, alpha = 0.6, size = 2) +
+  labs(
+    title = "Reaction Time by Control and Reward Conditions",
+    x = "Control Condition",
+    y = "Reaction Time (ms)",
+    color = "Image Category"
+  ) +
+  facet_wrap(~ ControlCond + RewardCond, nrow = 1, scales = "fixed") +  # one row!
+  theme_minimal(base_size = 14) +
+  theme(
+    strip.text = element_text(size = 12, face = "bold"),
+    plot.title = element_text(face = "bold", hjust = 0.5)
+  )
+#---------------------------------------------------------
+#all cats seperate
+ggplot(clean_accEMA_MAD, aes(x = ControlCond, y = RT, color = img_cat)) +
+  geom_jitter(width = 0.2, alpha = 0.6, size = 1.8) +
+  labs(
+    title = "Reaction Time by Control, Reward, and Image Category",
+    x = "Control Condition",
+    y = "Reaction Time (ms)",
+    color = "Image Category"
+  ) +
+  facet_wrap(~ img_cat + RewardCond + ControlCond, nrow = 1, scales = "fixed") +
+  theme_minimal(base_size = 13) +
+  theme(
+    strip.text = element_text(size = 10, face = "bold"),
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    panel.spacing.x = unit(0.5, "lines")
+  )
+
+
+#---------------------------------------------------------
+library(tidyverse)
+
+
+
+acc_condition_rt_means_after <- accEMA %>%
+  group_by(Subject, RewardCond, ControlCond) %>%
+  summarise(
+    # Mean RT for each condition (accurate trials only)
+    Acc_NegI_meanRT = mean(NegIrt, na.rm = TRUE),
+    Acc_NegS_meanRT = mean(NegSrt, na.rm = TRUE),
+    Acc_NeuI_meanRT = mean(NeuIrt, na.rm = TRUE),
+    Acc_NeuS_meanRT = mean(NeuSrt, na.rm = TRUE),
+    Acc_PosI_meanRT = mean(PosIrt, na.rm = TRUE),
+    Acc_PosS_meanRT = mean(PosSrt, na.rm = TRUE),
+    
+    # Combined means (accurate trials only)
+    Acc_Neg_meanRT = mean(c(NegIrt, NegSrt), na.rm = TRUE),
+    Acc_Neu_meanRT = mean(c(NeuIrt, NeuSrt), na.rm = TRUE),
+    Acc_Pos_meanRT = mean(c(PosIrt, PosSrt), na.rm = TRUE),
+    Acc_All_meanRT = mean(c(NegIrt, NegSrt, NeuIrt, NeuSrt, PosIrt, PosSrt), na.rm = TRUE),
+    Image_meanRT = mean(c(NegIrt, NeuIrt, PosIrt), na.rm = TRUE),
+    NoImage_meanRT = mean(c(NegSrt, NeuSrt, PosSrt), na.rm = TRUE),
+    
+    
+    .groups = 'drop'
+  )
+# Save the cleaned means to a CSV file
+write_csv(acc_condition_rt_means_after, "data/processed/acc_condition_rt_means_after.csv")
+acc_condition_rt_means_after
+#---------------------------------------------------------
+#BEFORE###################################################
+##########################################################
+##########################################################
+##########################################################
+
+acc_condition_rt_means_before <- accEMA %>%
+  group_by(Subject, RewardCond, ControlCond) %>%
+  summarise(
+    # Mean RT for each condition (accurate trials only)
+    Acc_NegI_meanRT = mean(NegIrt, na.rm = TRUE),
+    Acc_NegS_meanRT = mean(NegSrt, na.rm = TRUE),
+    Acc_NeuI_meanRT = mean(NeuIrt, na.rm = TRUE),
+    Acc_NeuS_meanRT = mean(NeuSrt, na.rm = TRUE),
+    Acc_PosI_meanRT = mean(PosIrt, na.rm = TRUE),
+    Acc_PosS_meanRT = mean(PosSrt, na.rm = TRUE),
+    
+    # Combined means (accurate trials only)
+    Acc_Neg_meanRT = mean(c(NegIrt, NegSrt), na.rm = TRUE),
+    Acc_Neu_meanRT = mean(c(NeuIrt, NeuSrt), na.rm = TRUE),
+    Acc_Pos_meanRT = mean(c(PosIrt, PosSrt), na.rm = TRUE),
+    Acc_All_meanRT = mean(c(NegIrt, NegSrt, NeuIrt, NeuSrt, PosIrt, PosSrt), na.rm = TRUE),
+    Image_meanRT = mean(c(NegIrt, NeuIrt, PosIrt), na.rm = TRUE),
+    NoImage_meanRT = mean(c(NegSrt, NeuSrt, PosSrt), na.rm = TRUE),
+    
+    
+    .groups = 'drop'
+  )
+
+write_csv(acc_condition_rt_means_before, "data/processed/acc_condition_rt_means_before.csv")
+acc_condition_rt_means_before
+
+#---------------------------------------------------
+rt_long_before <- rt_long %>%
+  filter(!is.na(RT))
+#plot
+rt_sum_before <- rt_long_before %>%
+  group_by(Subject, RewardCond, ControlCond, img_cat) %>%
+  summarize(
+    n      = n(),
+    meanRT = mean(RT),
+    medRT  = median(RT),
+    sdRT   = sd(RT),
+    seRT   = sdRT / sqrt(pmax(n, 1)),
+    .groups = "drop"
+  )
+
+ggplot(rt_sum_before, aes(x = img_cat, y = meanRT, fill = RewardCond)) +
+  # Bars with improved contrast
+  geom_col(position = position_dodge(width = 0.8), color = "black", width = 0.7) +
+  # Error bars
+  geom_errorbar(
+    aes(ymin = meanRT - seRT, ymax = meanRT + seRT),
+    width = 0.2,
+    position = position_dodge(width = 0.8)
+  ) +
   facet_wrap(~ ControlCond) +
   scale_fill_manual(
-    values = c("Fixed Reward" = "#1f78b4", "Motivated Reward" = "#33a02c"),
+    values = c("Fixed Reward" = "#1f78b4", "Motivated Reward" = "#33a02c"),  # blue vs. green
     name = "Reward Condition"
   ) +
   scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
   labs(
     x = "Image Condition",
-    y = "Reaction Time (ms)",
-    title = "Distribution of Reaction Times by Condition"
+    y = "Mean Reaction Time (ms)",
+    title = "Reaction Times by Image Valence, Reward, and Control Condition"
   ) +
-  theme_light(base_size = 14) +
+  theme_minimal(base_size = 14) +
   theme(
     panel.grid.major.x = element_blank(),
+    panel.grid.minor = element_blank(),
     axis.text.x = element_text(angle = 35, hjust = 1),
     strip.background = element_rect(fill = "grey90", color = NA),
     strip.text = element_text(face = "bold", size = 13),
     plot.title = element_text(face = "bold", size = 15, hjust = 0.5)
   )
-#---------------------------------------------------------
-#SANITY CHECK
-# Removal rates overall & per person
-removal_summary <- rt_long %>%
-  mutate(tag = "pre") %>%
-  bind_rows(clean_accEMA_MAD %>% mutate(tag = "post")) %>%
-  group_by(tag) %>% summarise(n = n(), .groups="drop") %>%
-  tidyr::pivot_wider(names_from = tag, values_from = n) %>%
-  mutate(removed = pre - post,
-         removed_pct = 100 * removed / pre)
 
-per_subj_removed <- rt_long %>%
-  group_by(Subject) %>% summarise(n_pre = n(), .groups="drop") %>%
-  left_join(clean_accEMA_MAD %>% group_by(Subject) %>% summarise(n_post = n(), .groups="drop"),
-            by = "Subject") %>%
-  mutate(n_post = dplyr::coalesce(n_post, 0L),
-         removed = n_pre - n_post,
-         removed_pct = 100 * removed / n_pre) %>%
-  arrange(desc(removed_pct))
-
-# Skewness before vs after (optional)
-library(e1071)
-skew_pre  <- skewness(dplyr::pull(dplyr::filter(rt_long), RT), na.rm=TRUE)
-skew_post <- skewness(clean_accEMA_MAD$RT, na.rm=TRUE)
-skew_pre
-skew_post
