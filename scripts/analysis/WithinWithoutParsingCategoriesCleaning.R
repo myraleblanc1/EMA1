@@ -30,9 +30,9 @@ rt_long_no0 <- rt_long |>
 
 #---------------------------------------------------------
 # ±2.5 MAD trimming within Subject × RewardCond × ControlCond × img_cat
-clean_accEMA_MAD <- rt_long_no0 |>
+clean_accEMA_3allMAD <- rt_long_no0 |>
   filter(!is.na(RT)) |>
-  group_by(Subject, img_cat) %>%
+  group_by(Subject) %>%
   mutate(
     rt_med = median(RT, na.rm = TRUE),
     rt_mad = mad(RT, constant = 1.4826, na.rm = TRUE),
@@ -43,11 +43,11 @@ clean_accEMA_MAD <- rt_long_no0 |>
   select(-rt_med, -rt_mad, -keep)
 #---------------------------------------------------------
 #check how much was trimmed
-MADtrim_report <- rt_long |>
+allMADtrim_report <- rt_long |>
   group_by(Subject, RewardCond, ControlCond, img_cat) |>
   summarize(n_pre = sum(!is.na(RT)), .groups = "drop") |>
   left_join(
-    clean_accEMA_3MAD |>
+    clean_accEMA_3allMAD |>
       group_by(Subject, RewardCond, ControlCond, img_cat) |>
       summarize(n_post = n(), .groups = "drop"),
     by = c("Subject","RewardCond","ControlCond","img_cat")
@@ -56,10 +56,10 @@ MADtrim_report <- rt_long |>
          trimmed = n_pre - n_post,
          pct_trim = if_else(n_pre > 0, 100 * trimmed / n_pre, NA_real_))
 #Inspect what was trimmed
-View(MADtrim_report)
+View(allMADtrim_report)
 #---------------------------------------------------------
 #Summarize trimming by img_cat
-MADtrim_by_category <- MADtrim_report %>%
+allMADtrim_by_category <- allMADtrim_report %>%
   group_by(img_cat) %>%
   summarize(
     n_pre = sum(n_pre, na.rm = TRUE),
@@ -68,10 +68,10 @@ MADtrim_by_category <- MADtrim_report %>%
     pct_trim = 100 * trimmed / n_pre
   ) %>%
   arrange(desc(pct_trim))
-View(MADtrim_by_category)
+View(allMADtrim_by_category)
 #---------------------------------------------------------
 #Summarize trimming by Subject
-MADtrim_by_subject <- MADtrim_report %>%
+allMADtrim_by_subject <- allMADtrim_report %>%
   group_by(Subject) %>%
   summarize(
     n_pre = sum(n_pre, na.rm = TRUE),
@@ -80,29 +80,29 @@ MADtrim_by_subject <- MADtrim_report %>%
     pct_trim = 100 * trimmed / n_pre
   ) %>%
   arrange(desc(pct_trim))
-View(MADtrim_by_subject)
-write.csv(MADtrim_by_subject, "data/processed/MADtrim_by_subject.csv", row.names = FALSE)
+View(allMADtrim_by_subject)
+write.csv(allMADtrim_by_subject, "data/processed/allMADtrim_by_subject.csv", row.names = FALSE)
 #---------------------------------------------------------
-#MAD trim overall
-MADtrim_overall <- MADtrim_report %>%
+#allMAD trim overall
+allMADtrim_overall <- allMADtrim_report %>%
   summarize(
     n_pre = sum(n_pre, na.rm = TRUE),
     n_post = sum(n_post, na.rm = TRUE),
     trimmed = n_pre - n_post,
     pct_trim = 100 * trimmed / n_pre
   )
-View(MADtrim_overall)
+View(allMADtrim_overall)
 ###################################################
 ###################################################
 ####################################################
 ###########################################################
-###################     SD     ###########################
+###################     allSD     ###########################
 ###########################################################
 #---------------------------------------------------------
-# +-3 SD trimming within Subject × RewardCond × ControlCond × img_cat
-clean_accEMA_3SD <- rt_long_no0 |>
+# +-3 allSD trimming within Subject × RewardCond × ControlCond × img_cat
+clean_accEMA_3allSD <- rt_long_no0 |>
   filter(!is.na(RT)) |>
-  group_by(Subject, img_cat) %>%
+  group_by(Subject) %>%
   mutate(
     rt_mu = mean(RT, na.rm = TRUE),
     rt_sd = sd(RT, na.rm = TRUE),
@@ -113,11 +113,11 @@ clean_accEMA_3SD <- rt_long_no0 |>
   select(-rt_mu, -rt_sd, -keep)
 #---------------------------------------------------------
 #check how much was trimmed
-SDtrim_report <- rt_long |>
+allSDtrim_report <- rt_long |>
   group_by(Subject, RewardCond, ControlCond, img_cat) |>
   summarize(n_pre = sum(!is.na(RT)), .groups = "drop") |>
   left_join(
-    clean_accEMA_3SD |>
+    clean_accEMA_3allSD |>
       group_by(Subject, RewardCond, ControlCond, img_cat) |>
       summarize(n_post = n(), .groups = "drop"),
     by = c("Subject","RewardCond","ControlCond","img_cat")
@@ -126,10 +126,10 @@ SDtrim_report <- rt_long |>
          trimmed = n_pre - n_post,
          pct_trim = if_else(n_pre > 0, 100 * trimmed / n_pre, NA_real_))
 #Inspect what was trimmed
-View(SDtrim_report)
+View(allSDtrim_report)
 #---------------------------------------------------------
-#SD trim by img_cat
-SDtrim_by_category <- SDtrim_report %>%
+#allSD trim by img_cat
+allSDtrim_by_category <- allSDtrim_report %>%
   group_by(img_cat) %>%
   summarize(
     n_pre = sum(n_pre, na.rm = TRUE),
@@ -138,10 +138,10 @@ SDtrim_by_category <- SDtrim_report %>%
     pct_trim = 100 * trimmed / n_pre
   ) %>%
   arrange(desc(pct_trim))
-View(SDtrim_by_category)
+View(allSDtrim_by_category)
 #---------------------------------------------------------
-#SD trim by subject
-SDtrim_by_subject <- SDtrim_report %>%
+#allSD trim by subject
+allSDtrim_by_subject <- allSDtrim_report %>%
   group_by(Subject) %>%
   summarize(
     n_pre = sum(n_pre, na.rm = TRUE),
@@ -150,89 +150,16 @@ SDtrim_by_subject <- SDtrim_report %>%
     pct_trim = 100 * trimmed / n_pre
   ) %>%
   arrange(desc(pct_trim))
-View(SDtrim_by_subject)
-write.csv(SDtrim_by_subject, "data/processed/SDtrim_by_subject.csv", row.names = FALSE)
+View(allSDtrim_by_subject)
+write.csv(allSDtrim_by_subject, "data/processed/allSDtrim_by_subject.csv", row.names = FALSE)
 #---------------------------------------------------------
-#SD trim overall
-SDtrim_overall <- SDtrim_report %>%
+#allSD trim overall
+allSDtrim_overall <- allSDtrim_report %>%
   summarize(
     n_pre = sum(n_pre, na.rm = TRUE),
     n_post = sum(n_post, na.rm = TRUE),
     trimmed = n_pre - n_post,
     pct_trim = 100 * trimmed / n_pre
   )
-View(SDtrim_overall)
+View(allSDtrim_overall)
 #-----------------------------------------------------------
-#After MAD
-library(tidyverse)
-library(psych)
-
-subj_means <- clean_accEMA_MAD |>
-  group_by(Subject, ControlCond, img_cat) |>
-  summarise(RT = mean(RT, na.rm = TRUE), .groups = "drop")
-# use median(RT, na.rm = TRUE) if you prefer robustness
-
-# 2) Rename img_cat to the classic column names used in your screenshot
-subj_means <- subj_means %>%
-  mutate(rt_var = recode(img_cat,
-                         "neg_img"    = "NegIrt",
-                         "pos_img"    = "PosIrt",
-                         "neu_img"    = "NeuIrt",
-                         "neg_noimg"  = "NegSrt",
-                         "pos_noimg"  = "PosSrt",
-                         "neu_noimg"  = "NeuSrt"
-  ))
-
-# 3) Pivot wider safely (now no duplicate warning)
-wide_rt <- subj_means |>
-  pivot_wider(
-    names_from  = rt_var,
-    values_from = RT,
-    values_fill = NA_real_
-  )
-
-#------------------------------------------------------------
-#Before MAD
-accEMA_subj <- rt_long |>
-  group_by(Subject, ControlCond, img_cat) |>
-  summarise(RT = mean(RT, na.rm = TRUE), .groups = "drop")
-# use median(RT, na.rm = TRUE) if you prefer robustness
-
-# 2) Rename img_cat to the classic column names used in your screenshot
-accEMA_subj <- accEMA_subj %>%
-  mutate(rt_var = recode(img_cat,
-                         "neg_img"    = "NegIrt",
-                         "pos_img"    = "PosIrt",
-                         "neu_img"    = "NeuIrt",
-                         "neg_noimg"  = "NegSrt",
-                         "pos_noimg"  = "PosSrt",
-                         "neu_noimg"  = "NeuSrt"
-  ))
-
-# 3) Pivot wider safely (now no duplicate warning)
-accEMA_wide_rt <- accEMA_subj |>
-  pivot_wider(
-    names_from  = rt_var,
-    values_from = RT,
-    values_fill = NA_real_
-  )
-#-------------------------------------------------------------
-#Table after MAD cleaning
-vars <- c("NegIrt","PosIrt","NeuIrt","NegSrt","PosSrt","NeuSrt")
-describeBy(wide_rt[vars], group = wide_rt$ControlCond, digits = 2)
-
-#Table before Mad cleaning
-vars <- c("NegIrt","PosIrt","NeuIrt","NegSrt","PosSrt","NeuSrt")
-describeBy(accEMA_wide_rt[vars], group = accEMA_wide_rt$ControlCond, digits = 2)
-
-
-
-
-rt_cols <- c("NegIrt", "PosIrt", "NeuIrt", "NegSrt", "PosSrt", "NeuSrt")
-
-describeBy(accEMA[rt_cols], group = accEMA$ControlCond, digits = 2, na.rm = TRUE)
-#---------------------------------------------------------
-#FINAL DATA SAVE HERE FOR NEXT STEPSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
-
-#
-write.csv(wide_rt, "data/processed/within_sub_clean.csv", row.names = FALSE)
