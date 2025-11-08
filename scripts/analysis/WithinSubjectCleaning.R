@@ -111,6 +111,7 @@ clean_accEMA_3SD <- rt_long_no0 |>
   ungroup() %>%
   filter(keep) %>%
   select(-rt_mu, -rt_sd, -keep)
+write.csv(clean_accEMA_3SD, "data/processed/clean_accEMA_3SD.csv", row.names = FALSE)
 #---------------------------------------------------------
 #check how much was trimmed
 SDtrim_report <- rt_long |>
