@@ -29,37 +29,34 @@ rt_long_no0 <- rt_long |>
   mutate(RT = if_else(RT == 0, NA_real_, RT))
 
 #---------------------------------------------------------
-# ±2.5 MAD trimming within Subject × RewardCond × ControlCond × img_cat
-clean_accEMA_MAD <- rt_long_no0 |>
-  filter(!is.na(RT)) |>
-  group_by(Subject, img_cat) %>%
-  mutate(
-    rt_med = median(RT, na.rm = TRUE),
-    rt_mad = mad(RT, constant = 1.4826, na.rm = TRUE),
-    keep   = RT >= (rt_med - 3 * rt_mad) & RT <= (rt_med + 3 * rt_mad)
-  ) %>%
-  ungroup() %>%
-  filter(keep) %>%
-  select(-rt_med, -rt_mad, -keep)
+#------------------------------------------------------------------------------
+#Remove trials with RT <= 200ms
+rt_long_no200 <- rt_long |>
+  mutate(RT = if_else(RT <= 200, NA_real_, RT))
+
 #---------------------------------------------------------
 #check how much was trimmed
-MADtrim_report <- rt_long |>
+no200trim_report <- rt_long |>
   group_by(Subject, RewardCond, ControlCond, img_cat) |>
-  summarize(n_pre = sum(!is.na(RT)), .groups = "drop") |>
+  summarise(n_pre = sum(!is.na(RT)), .groups = "drop") |>
   left_join(
-    clean_accEMA_3MAD |>
+    rt_long_no200 |>
+      filter(!is.na(RT)) |>   # <— add this
       group_by(Subject, RewardCond, ControlCond, img_cat) |>
-      summarize(n_post = n(), .groups = "drop"),
+      summarise(n_post = n(), .groups = "drop"),
     by = c("Subject","RewardCond","ControlCond","img_cat")
-  ) %>%
-  mutate(n_post = coalesce(n_post, 0L),
-         trimmed = n_pre - n_post,
-         pct_trim = if_else(n_pre > 0, 100 * trimmed / n_pre, NA_real_))
+  ) |>
+  mutate(
+    n_post = coalesce(n_post, 0L),
+    trimmed = n_pre - n_post,
+    pct_trim = if_else(n_pre > 0, 100 * trimmed / n_pre, NA_real_)
+  )
+
 #Inspect what was trimmed
-View(MADtrim_report)
+View(no200trim_report)
 #---------------------------------------------------------
-#Summarize trimming by img_cat
-MADtrim_by_category <- MADtrim_report %>%
+#200 trim by img_cat
+no200trim_by_category <- no200trim_report %>%
   group_by(img_cat) %>%
   summarize(
     n_pre = sum(n_pre, na.rm = TRUE),
@@ -68,10 +65,10 @@ MADtrim_by_category <- MADtrim_report %>%
     pct_trim = 100 * trimmed / n_pre
   ) %>%
   arrange(desc(pct_trim))
-View(MADtrim_by_category)
+View(no200trim_by_category)
 #---------------------------------------------------------
-#Summarize trimming by Subject
-MADtrim_by_subject <- MADtrim_report %>%
+#200 trim by subject
+no200trim_by_subject <- no200trim_report %>%
   group_by(Subject) %>%
   summarize(
     n_pre = sum(n_pre, na.rm = TRUE),
@@ -80,27 +77,39 @@ MADtrim_by_subject <- MADtrim_report %>%
     pct_trim = 100 * trimmed / n_pre
   ) %>%
   arrange(desc(pct_trim))
-View(MADtrim_by_subject)
-write.csv(MADtrim_by_subject, "data/processed/MADtrim_by_subject.csv", row.names = FALSE)
+View(no200trim_by_subject)
+
+no200trim_with_ppi <- no200trim_by_subject %>%
+  mutate(Subject = as.numeric(as.character(Subject))) %>%   # convert factor → numeric
+  left_join(
+    between_wide %>%
+      mutate(Subject = as.numeric(Subject)) %>%             # ensure same type
+      select(Subject, PPIR40),
+    by = "Subject"
+  )
+
+View(no200trim_with_ppi)
+
+# Save to CSV
+write.csv(no200trim_with_ppi, "data/processed/no200trim_by_subject_ppi.csv", row.names = FALSE)
+
 #---------------------------------------------------------
-#MAD trim overall
-MADtrim_overall <- MADtrim_report %>%
+#200 trim overall
+no200trim_overall <- SDtrim_report %>%
   summarize(
     n_pre = sum(n_pre, na.rm = TRUE),
     n_post = sum(n_post, na.rm = TRUE),
     trimmed = n_pre - n_post,
     pct_trim = 100 * trimmed / n_pre
   )
-View(MADtrim_overall)
-###################################################
-###################################################
-####################################################
-###########################################################
-###################     SD     ###########################
-###########################################################
+View(no200trim_overall)
+#-----------------------------------------------------------
+#########################################################
+###########################     SD    ##########################################
+#######################################################################
 #---------------------------------------------------------
 # +-3 SD trimming within Subject × RewardCond × ControlCond × img_cat
-clean_accEMA_3SD <- rt_long_no0 |>
+clean_accEMA_3SD <- rt_long_no200 |>
   filter(!is.na(RT)) |>
   group_by(Subject, img_cat) %>%
   mutate(
@@ -114,7 +123,7 @@ clean_accEMA_3SD <- rt_long_no0 |>
 write.csv(clean_accEMA_3SD, "data/processed/clean_accEMA_3SD.csv", row.names = FALSE)
 #---------------------------------------------------------
 #check how much was trimmed
-SDtrim_report <- rt_long |>
+SDtrim_report <- rt_long_no200 |>
   group_by(Subject, RewardCond, ControlCond, img_cat) |>
   summarize(n_pre = sum(!is.na(RT)), .groups = "drop") |>
   left_join(
