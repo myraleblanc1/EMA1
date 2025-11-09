@@ -172,77 +172,7 @@ SDtrim_overall <- SDtrim_report %>%
     pct_trim = 100 * trimmed / n_pre
   )
 View(SDtrim_overall)
-#-----------------------------------------------------------
-#After MAD
-library(tidyverse)
-library(psych)
-
-subj_means <- clean_accEMA_MAD |>
-  group_by(Subject, ControlCond, img_cat) |>
-  summarise(RT = mean(RT, na.rm = TRUE), .groups = "drop")
-# use median(RT, na.rm = TRUE) if you prefer robustness
-
-# 2) Rename img_cat to the classic column names used in your screenshot
-subj_means <- subj_means %>%
-  mutate(rt_var = recode(img_cat,
-                         "neg_img"    = "NegIrt",
-                         "pos_img"    = "PosIrt",
-                         "neu_img"    = "NeuIrt",
-                         "neg_noimg"  = "NegSrt",
-                         "pos_noimg"  = "PosSrt",
-                         "neu_noimg"  = "NeuSrt"
-  ))
-
-# 3) Pivot wider safely (now no duplicate warning)
-wide_rt <- subj_means |>
-  pivot_wider(
-    names_from  = rt_var,
-    values_from = RT,
-    values_fill = NA_real_
-  )
 
 #------------------------------------------------------------
-#Before MAD
-accEMA_subj <- rt_long |>
-  group_by(Subject, ControlCond, img_cat) |>
-  summarise(RT = mean(RT, na.rm = TRUE), .groups = "drop")
-# use median(RT, na.rm = TRUE) if you prefer robustness
 
-# 2) Rename img_cat to the classic column names used in your screenshot
-accEMA_subj <- accEMA_subj %>%
-  mutate(rt_var = recode(img_cat,
-                         "neg_img"    = "NegIrt",
-                         "pos_img"    = "PosIrt",
-                         "neu_img"    = "NeuIrt",
-                         "neg_noimg"  = "NegSrt",
-                         "pos_noimg"  = "PosSrt",
-                         "neu_noimg"  = "NeuSrt"
-  ))
-
-# 3) Pivot wider safely (now no duplicate warning)
-accEMA_wide_rt <- accEMA_subj |>
-  pivot_wider(
-    names_from  = rt_var,
-    values_from = RT,
-    values_fill = NA_real_
-  )
-#-------------------------------------------------------------
-#Table after MAD cleaning
-vars <- c("NegIrt","PosIrt","NeuIrt","NegSrt","PosSrt","NeuSrt")
-describeBy(wide_rt[vars], group = wide_rt$ControlCond, digits = 2)
-
-#Table before Mad cleaning
-vars <- c("NegIrt","PosIrt","NeuIrt","NegSrt","PosSrt","NeuSrt")
-describeBy(accEMA_wide_rt[vars], group = accEMA_wide_rt$ControlCond, digits = 2)
-
-
-
-
-rt_cols <- c("NegIrt", "PosIrt", "NeuIrt", "NegSrt", "PosSrt", "NeuSrt")
-
-describeBy(accEMA[rt_cols], group = accEMA$ControlCond, digits = 2, na.rm = TRUE)
-#---------------------------------------------------------
-#FINAL DATA SAVE HERE FOR NEXT STEPSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
-
-#
-write.csv(wide_rt, "data/processed/within_sub_clean.csv", row.names = FALSE)
+write.csv(clean_accEMA_3SD, "data/processed/within_sub_clean.csv", row.names = FALSE)
