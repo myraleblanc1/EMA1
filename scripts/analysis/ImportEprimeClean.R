@@ -7,10 +7,16 @@ library(readr)
 #IMPORTING ALL DATA
 
 #import eprime 09 29 (roughly 100 participants)
+#posterData <- read_delim(
+#  'data/raw/FINAL_0929.txt',   # The name of your *.txt file output from Emerge
+#  delim = '\t', # These data are tab separated
+#) 
+
+#E-merge then export the emerge file as SPSS and uncheck unicode box
+#import SSSP Abstract Data
 posterData <- read_delim(
-  'data/raw/FINAL_0929.txt',   # The name of your *.txt file output from Emerge
-  delim = '\t', # These data are tab separated
-) 
+ 'data/raw/sssp_abstract_data.txt',
+ delim = '\t',) 
 
 
 
@@ -44,7 +50,8 @@ posterData_clean <-
   )
 
 #import Qualtrics
-Qualtrics <- read.csv("data/raw/Qualtrics0929.csv")
+#Qualtrics <- read.csv("data/raw/Qualtrics0929.csv")
+Qualtrics <- read.csv("data/raw/qual_sssp_abstract.csv")
 
 #Clean Qualtrics
 Qualtrics_clean <- 
@@ -58,7 +65,7 @@ Qualtrics_clean <-
   )
 
 #import eprime excel w/ conds
-EprimeFiles <- read.csv("data/raw/EMA1_eprime_files_0929.csv")
+EprimeFiles <- read.csv("data/raw/EMA1_eprime_files_sssp_abstract.csv")
 
 #Clean EprimeFiles
 EprimeFiles_clean <- 
@@ -103,9 +110,9 @@ EMA_factors <- joinedData |>
 #number
 #prints out any non-numerical values entered in age on Qualtrics
 EMA_factors |>
-  +     select(Age, PPIR40, NegIacc, NegSacc) |>
-  +     filter(!grepl("^[0-9.]+$", Age)) |>   # shows rows where Age isn't purely numeric
-  +     distinct(Age)
+  select(Age, PPIR40, NegIacc, NegSacc) |>
+  filter(!grepl("^[0-9.]+$", Age)) |>   # shows rows where Age isn't purely numeric
+   distinct(Age)
 #remove the strings
 EMA_factors <- EMA_factors |>
   mutate(Age = parse_number(Age))
