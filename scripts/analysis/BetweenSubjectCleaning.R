@@ -1,20 +1,30 @@
+#between subject cleaning
+within_subj_data <- read.csv("data/processed/clean_accEMA_3SD.csv")
+str(within_subj_data)
+#-------------------------------------------------------------------------------
 library(dplyr)
-library(afex)
-library(emmeans)
 
-#-----------------------------------------
-# 1) Prepare data for image trials only
-#-----------------------------------------
-dat_img <- between_clean_final %>%
-  filter(presence == "img", !is.na(RT), !is.na(PPIR40)) %>%
+within_subj_means <- within_subj_data %>%
+  group_by(Subject, RewardCond, ControlCond) %>%
+  summarize(mean_RT = mean(RT, na.rm = TRUE), .groups = "drop", .keep = "all")
+
+between_clean <- within_subj_means %>%
+  group_by(RewardCond, ControlCond) %>%
   mutate(
-    Subject     = factor(Subject),
-    RewardCond  = factor(RewardCond),
-    ControlCond = factor(ControlCond),
-    valence     = factor(valence, levels = c("neg","neu","pos")),
-    # force numeric type (no attributes, no factor!)
-    PPIR40_c    = as.numeric(PPIR40) - mean(as.numeric(PPIR40), na.rm = TRUE)
-  )
+    grp_mu = mean(mean_RT, na.rm = TRUE),
+    grp_sd = sd(mean_RT, na.rm = TRUE),
+    keep = mean_RT >= (grp_mu - 3 * grp_sd) & mean_RT <= (grp_mu + 3 * grp_sd)
+  ) %>%
+  ungroup()
+#-------------------------------------------------------
+outliers_between <- between_clean %>% 
+  group_by(Subject) |>
+  filter(!keep)
+View(outliers_between)
 
-# Verify it's numeric
-str(dat_img$PPIR40_c)
+between_clean_final <- within_subj_data %>%
+  filter(!Subject %in% c(132))
+str(between_clean_final)
+View(between_clean_final)
+
+write.csv(between_clean_final, "data/processed/between_clean_final.csv", row.names = FALSE)

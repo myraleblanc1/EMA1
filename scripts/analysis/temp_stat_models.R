@@ -1,7 +1,42 @@
 library(dplyr)
 library(afex)
 library(car)
+#-------------------------------------------------------------------------------
+# 1. Start from your cleaned dataset
+dat <- between_clean_final
 
+# 2. Use ALL trials (no filtering for image), clean variables, center PPIR40
+dat_all <- dat %>%
+  filter(!is.na(RT)) %>%   # keep all valid RTs
+  mutate(
+    RewardCond  = factor(RewardCond),
+    ControlCond = factor(ControlCond),
+    valence     = factor(valence, levels = c("neg","pos","neu")),
+    PPIR40      = as.numeric(as.character(PPIR40)),
+    PPIR40_c    = scale(PPIR40, center = TRUE, scale = FALSE) |> as.numeric()
+  )
+
+# 3. Collapse to Subject × RewardCond × ControlCond × valence means
+#    (same structure as your image-only pipeline)
+cell_means <- dat_all %>%
+  group_by(Subject, RewardCond, ControlCond, valence, PPIR40_c) %>%
+  summarise(RT = mean(RT, na.rm = TRUE), .groups = "drop")
+
+# 4. Run ANCOVA with valence as a repeated factor
+aov_all <- aov_car(
+  RT ~ PPIR40_c * (RewardCond * ControlCond * valence) + Error(Subject/valence),
+  data = cell_means,
+  factorize = FALSE,
+  type = 3
+)
+
+# 5. View results
+aov_all$anova_table
+nice(aov_all)
+
+
+
+#-------------------------------------------------------------------------------
 # 1. Start from your cleaned dataset
 dat <- between_clean_final
 
@@ -26,7 +61,7 @@ cell_means <- dat_img %>%
 aov_img <- aov_car(
   RT ~ PPIR40_c * (RewardCond * ControlCond * valence) + Error(Subject/valence),
   data = cell_means,
-  factorize = FALSE,     # keep PPIR40 numeric
+  factorize = FALSE,
   type = 3
 )
 

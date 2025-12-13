@@ -2,7 +2,7 @@ str(clean_accEMA_3SD)
 library(dplyr)
 
 # Compute each participant's mean RT by Control × Reward × Image condition
-rt_summary <- clean_accEMA_3SD %>%
+rt_summary <- between_clean_final %>%
   group_by(Subject, PPIR40, ControlCond, RewardCond, img_cat) %>%
   summarize(mean_RT = mean(RT, na.rm = TRUE), .groups = "drop")
 

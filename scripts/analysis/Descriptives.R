@@ -23,6 +23,8 @@ subject_data |> distinct(Subject, RewardCond) |>
   count(RewardCond)
 subject_data |> distinct(Subject, ControlCond) |> 
   count(ControlCond)
+subject_data |> distinct(Subject, ControlCond, RewardCond) |> 
+  count(ControlCond, RewardCond)
 #-------------------------------------------------------------------------------
 #groups all the blocks into dataset
 rt_cols <- c("NegIrt", "PosIrt", "NeuIrt", "NegSrt", "PosSrt", "NeuSrt")
